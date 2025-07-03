@@ -1,23 +1,21 @@
 { config, pkgs, ... }:
 {
-  home.username = "a";
-  home.homeDirectory = "/home/a";
-  home.stateVersion = "25.05";
-
-  programs.zsh.enable = true;
-  
-  programs.git = {
-    enable = true;
-    userName  = "leapingturtlefrog";
-    userEmail = "alexanderaridgides@gmail.com";
+  home = {
+    username = "a";
+    homeDirectory = "/home/a";
+    stateVersion = "25.05";
+    packages = with pkgs; [
+      neovim htop fzf bat tree wget curl
+      google-chrome gh
+    ];
+    sessionPath = [ "/etc/nixos/home/scripts" ];
   };
   
-  programs.firefox.enable = true;
-
-  home.packages = with pkgs; [
-    neovim htop fzf bat tree wget curl
-    google-chrome gh
-  ];
+  programs = {
+    bash.enable = true;
+    zsh.enable = true;
+    firefox.enable = true;
+  };
   
   xdg.enable = true;
 }
