@@ -8,4 +8,5 @@ fi
 
 git -C /etc/nixos add -A
 git -C /etc/nixos commit -m "$*"
+git -C /etc/nixos push
 sudo nixos-rebuild switch --flake /etc/nixos#alexhp
