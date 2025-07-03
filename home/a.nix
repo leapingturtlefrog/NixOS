@@ -16,7 +16,7 @@
 
   home.packages = with pkgs; [
     neovim htop fzf bat tree wget curl
-    google-chrome
+    google-chrome gh
   ];
   
   xdg.enable = true;

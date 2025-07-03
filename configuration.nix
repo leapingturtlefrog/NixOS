@@ -95,5 +95,7 @@ in
   };
   
   hardware.graphics.extraPackages = with pkgs; [ vulkan-loader ];
+  
+  programs.zsh.enable = true;
 }
 
