@@ -1,0 +1,86 @@
+#!/usr/bin/env bash
+set -euo pipefail
+#
+# ,a – Add a nixpkgs package to a.nix robustly and atomically.
+
+# ==> CONFIGURATION
+nix_file="/etc/nixos/home/a.nix"
+attr_path="home.packages"
+attr_dot_path=".${attr_path}" # Format for nix-editor
+
+# A standardized function for exiting on error.
+die() {
+  printf '❌ %s\n' "$*" >&2
+  exit 1
+}
+
+## 1. Validate arguments and find dependencies.
+[[ $# -eq 1 ]] || die "Usage: $(basename "$0") <package>"
+pkg="$1"
+
+command -v nix-editor >/dev/null || die "'nix-editor' is not on your PATH."
+
+# Use a robust, channel-aware method to find nixpkgs.
+nixpkgs_path=$(nix-instantiate --find-file nixpkgs 2>/dev/null || \
+               nix eval --raw --impure --expr '(builtins.getFlake "github:NixOS/nixpkgs").outPath')
+
+# Define a reusable expression for importing nixpkgs to avoid duplicate work.
+pkgs_expr="import (builtins.toPath \"${nixpkgs_path}\") {}"
+
+# Use `getAttrFromPath` for a reliable existence test that supports nested attributes.
+nix eval --raw --impure --expr \
+  "builtins.getAttrFromPath (builtins.splitString \".\" \"${pkg}\") (${pkgs_expr})".drvPath &>/dev/null \
+  || die "\"$pkg\" is not a valid attribute in nixpkgs."
+
+## 2. Lock the file and ensure the lock is *always* released on exit.
+exec 9>"$nix_file"
+flock -x 9 # --- BEGIN CRITICAL ATOMIC SECTION ---
+trap 'flock -u 9' EXIT # Lock is released automatically on any exit.
+
+# Check for presence by comparing derivation paths.
+# NOTE: Comparing by `drvPath` is standard. For complex overlays, one might
+# compare `p.outPath` instead, but that has other trade-offs.
+is_present=$(nix eval --impure --raw --expr "
+  let
+    pkgs = ${pkgs_expr};
+    hm   = (import ${nix_file}) { inherit pkgs; config = {}; lib = pkgs.lib; };
+    drvPath = (builtins.getAttrFromPath (builtins.splitString \".\" \"${pkg}\") pkgs).drvPath;
+  in builtins.any (p: p.drvPath == drvPath) hm.${attr_path}
+")
+
+if [[ "$is_present" == "true" ]]; then
+  echo "ℹ️ \"$pkg\" is already in the package list."
+  exit 0
+fi
+
+## 3. Add, sort, format, and commit as a single atomic operation.
+echo "➕ Adding \"$pkg\"..."
+# Check for modern nix-editor feature, with a fallback for older versions.
+if nix-editor --help | grep -q 'add-sorted'; then
+  nix-editor --add-sorted "$attr_dot_path" "$pkg" "$nix_file" || die "nix-editor failed."
+else
+  nix-editor --add "$attr_dot_path" "$pkg" "$nix_file" || die "nix-editor (add) failed."
+  nix-editor --sort "$attr_dot_path" "$nix_file" || die "nix-editor (sort) failed."
+fi
+
+# Formatting is optional; proceeds if Alejandra is available.
+if command -v alejandra >/dev/null; then
+  echo "🎨 Formatting with Alejandra..."
+  alejandra --quiet "$nix_file"
+else
+  echo " पुढे जात आहे... formatter 'alejandra' not found."
+fi
+
+# Commit only if there are actual changes in the worktree OR the index.
+if ! (git diff --quiet --exit-code -- "$nix_file" && git diff --quiet --exit-code --cached -- "$nix_file"); then
+  echo "✅ Changes detected. Applying system configuration..."
+  # NOTE: The helper `,ns` should handle git race conditions,
+  # for instance by running `git pull --rebase` before pushing.
+  ,ns "add ${pkg}" || {
+    # This fully reverts the file in both the staging area and working tree.
+    git restore --source=HEAD --staged --worktree "$nix_file"
+    die "Build failed. Reverted changes to ${nix_file}."
+  }
+else
+  echo "✅ No changes to apply."
+fi

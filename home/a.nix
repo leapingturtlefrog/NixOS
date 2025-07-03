@@ -6,7 +6,7 @@
     stateVersion = "25.05";
     packages = with pkgs; [
       neovim htop fzf bat tree wget curl
-      google-chrome gh
+      google-chrome gh alejandra nix-editor
     ];
     sessionPath = [ "/etc/nixos/home/scripts" ];
   };
