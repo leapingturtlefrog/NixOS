@@ -8,21 +8,27 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     flake-utils.url = "github:numtide/flake-utils";
+    nix-editor.url = "github:snowfallorg/nix-editor";
   };
 
-  outputs = { self, nixpkgs, home-manager, flake-utils, ... }:
+  outputs = { self, nixpkgs, home-manager, flake-utils, nix-editor, ... }:
     let
       system = "x86_64-linux";
       pkgs = import nixpkgs {
         inherit system;
         config = { allowUnfree = true; };
       };
+      nixEditorPkg = nix-editor.packages.${system}.default;
     in {
       nixosConfigurations.alexhp = nixpkgs.lib.nixosSystem {
         inherit system;
         modules = [
           ./hardware-configuration.nix
           ./configuration.nix
+          
+          ({ ... }: {
+            environment.systemPackages = with pkgs; [ nixEditorPkg ];
+          })
 
           home-manager.nixosModules.home-manager
           {
