@@ -6,7 +6,8 @@
     stateVersion = "25.05";
     packages = with pkgs; [
       neovim htop fzf bat tree wget curl
-      google-chrome gh alejandra
+      google-chrome gh alejandra btrfs-progs
+      qemu_kvm
     ];
     sessionPath = [ "/etc/nixos/home/scripts" ];
   };
