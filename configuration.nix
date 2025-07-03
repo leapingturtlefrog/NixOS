@@ -205,5 +205,6 @@ in
   # networking.firewall.allowedUDPPorts = [ ];
   
   services.pipewire.alsa.enable = true;
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
 }
 

@@ -19,7 +19,7 @@
       options = [ "subvol=@" ];
     };
 
-  fileSystems."/boot/efi" =
+  fileSystems."/boot" =
     { device = "/dev/disk/by-uuid/235A-CEF3";
       fsType = "vfat";
       options = [ "fmask=0022" "dmask=0022" ];
