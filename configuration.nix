@@ -68,6 +68,8 @@ in
   };
   systemd.tmpfiles.rules = [
     "d /c 2775 root devs -"
+    "d /c/.cache 2775 a devs -"
+    "d /c/.cache/uv 2775 a devs -"
   ];
   
   environment.sessionVariables = {
