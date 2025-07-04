@@ -4,5 +4,5 @@
   
   services.xserver.videoDrivers = [ "modesetting" ];
   
-  virtualisation.qemuGuest.enable = true;
+  services.qemuGuest.enable = true;
 }
