@@ -7,7 +7,7 @@
     packages = with pkgs; [
       neovim htop fzf bat tree wget curl
       google-chrome gh alejandra btrfs-progs
-      qemu_kvm code-cursor-fhs uv
+      qemu_kvm code-cursor-fhs uv ollama-cuda
     ];
     sessionPath = [ "/etc/nixos/home/scripts" ];
   };
