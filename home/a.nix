@@ -8,7 +8,7 @@
       neovim htop fzf bat tree wget curl
       google-chrome gh alejandra btrfs-progs
       qemu_kvm code-cursor-fhs uv ollama-cuda
-      python313Packages.huggingface-hub
+      python313Packages.huggingface-hub jq
     ];
     sessionPath = [ "/etc/nixos/home/scripts" ];
   };
