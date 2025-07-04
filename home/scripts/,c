@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# zero or one arg allowed
+if [[ $# -gt 1 ]]; then
+  echo "Usage: ,c <file-or-dir>" >&2
+  exit 1
+fi
+
+# make first arg absolute unless already so
+if [[ $# -eq 1 ]]; then
+  target=$1
+  [[ $target = /* ]] || target="$PWD/$target"
+fi
+
+# launch Cursor in a transient user unit with a unique name
+unit="cursor-$(date +%s%N)"
+exec systemd-run --user --quiet --unit="$unit" cursor ${target:-}
