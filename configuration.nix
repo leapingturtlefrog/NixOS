@@ -70,6 +70,10 @@ in
     "d /c 2775 root devs -"
   ];
   
+  environment.sessionVariables = {
+    UV_CACHE_DIR = "/c/.cache/uv";
+    UV_LINK_MODE = "hardlink";
+  };
   environment.systemPackages = with pkgs; [
     git
     vim
