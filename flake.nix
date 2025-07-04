@@ -1,5 +1,5 @@
 {
-  description = "alexhp NixOS + Home Manager";
+  description = "alexhp NixOS fleet + Home Manager";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
@@ -9,27 +9,25 @@
     };
     flake-utils.url = "github:numtide/flake-utils";
     nix-editor.url = "github:snowfallorg/nix-editor";
+    nixos-generators.url = "github:nix-community/nixos-generators";
   };
 
-  outputs = { self, nixpkgs, home-manager, flake-utils, nix-editor, ... }:
+  outputs = inputs@{ self, nixpkgs, home-manager, flake-utils, nix-editor, nixos-generators, ... }:
+    flake-utils.lib.eachSystem [ "x86_64-linux" ] (system:
     let
-      system = "x86_64-linux";
-      pkgs = import nixpkgs {
-        inherit system;
-        config = { allowUnfree = true; };
-      };
+      pkgs = import nixpkgs { inherit system; config = { allowUnfree = true; }; };
       nixEditorPkg = nix-editor.packages.${system}.default;
-    in {
-      nixosConfigurations.alexhp = nixpkgs.lib.nixosSystem {
+      
+      # makeHost { name = "laptop"; label = "nixosroot-01"; }
+      makeHost = { name, label }: nixpkgs.lib.nixosSystem {
         inherit system;
         modules = [
-          ./hardware-configuration.nix
-          ./configuration.nix
-          
+          ./common.nix
+          ./hosts/${name}.nix
           ({ ... }: {
             environment.systemPackages = with pkgs; [ nixEditorPkg ];
           })
-
+          
           home-manager.nixosModules.home-manager
           {
             home-manager.useGlobalPkgs   = true;
@@ -37,10 +35,26 @@
             home-manager.users.a         = import ./home/a.nix;
           }
         ];
+        
+        specialArgs = { inherit label; };
       };
-
-      devShells.${system}.default = pkgs.mkShell {
+    in
+    let 
+        alexhpSystem = makeHost { name = "alexhp"; label = "nixosroot-01"; };
+        buildvmSystem = makeHost { name = "buildvm"; label = "nixosroot-02"; };
+        cloudSystem = makeHost { name = "cloud"; label = "nixosroot-03"; };
+    in
+    {
+      nixosConfigurations = {
+        alexhp = alexhpSystem;
+        buildvm = buildvmSystem;
+        cloud = cloudSystem;
+      };
+      
+      packages.buildvm-image = buildvmSystem.config.system.build.qcow;
+      
+      devShells.default = pkgs.mkShell {
         buildInputs = [ pkgs.git pkgs.btop ];
       };
-    };
+    });
 }
