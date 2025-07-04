@@ -106,6 +106,12 @@ in
   
   hardware.graphics.extraPackages = with pkgs; [ vulkan-loader ];
   
-  programs.zsh.enable = true;
+  programs.zsh = {
+    enable = true;
+    shellInit = ''
+      export UV_CACHE_DIR=/c/.cache/uv
+      export UV_LINK_MODE=hardlink
+    '';
+  };
 }
 
