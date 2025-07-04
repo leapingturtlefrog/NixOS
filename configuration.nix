@@ -60,11 +60,15 @@ in
     openssh.enable = true;
   };
   
+  users.groups.devs = { };
   users.users.a = {
     isNormalUser = true;
-    extraGroups = [ "wheel" "networkmanager" ]; # Enable ‘sudo’ for the user.
+    extraGroups = [ "wheel" "networkmanager" "devs" ]; # Enable ‘sudo’ for the user.
     shell = pkgs.zsh;
   };
+  systemd.tmpfiles.rules = [
+    "d /c 2775 root devs -"
+  ];
   
   environment.systemPackages = with pkgs; [
     git
