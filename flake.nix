@@ -41,6 +41,26 @@
         ];
       };
 
+      nixosConfigurations.buildvm = nixpkgs.lib.nixosSystem {
+        inherit system;
+        modules = [
+          ({ ... }: { imports = [ ./common.nix ]; _module.args.label = "nixosroot"; })
+          ./hosts/hardware/alexhp-hardware.nix
+          ./hosts/buildvm.nix
+          
+          ({ ... }: {
+            environment.systemPackages = with pkgs; [ nixEditorPkg ];
+          })
+
+          home-manager.nixosModules.home-manager
+          ({ config, pkgs, lib, ... }: {
+            home-manager.useGlobalPkgs   = true;
+            home-manager.useUserPackages = true;
+            home-manager.users.a         = import ./home/a.nix;
+          })
+        ];
+      };
+
       devShells.${system}.default = pkgs.mkShell {
         buildInputs = [ pkgs.git pkgs.btop ];
       };
