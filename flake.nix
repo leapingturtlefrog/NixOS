@@ -1,5 +1,5 @@
 {
-  description = "alexhp NixOS fleet + Home Manager";
+  description = "alexhp NixOS + Home Manager";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
@@ -12,48 +12,37 @@
   };
 
   outputs = { self, nixpkgs, home-manager, flake-utils, nix-editor, ... }:
-    flake-utils.lib.eachSystem [ "x86_64-linux" ] (system:
-      let
-        pkgs = import nixpkgs {
-          inherit system;
-          config = { allowUnfree = true; };
-        };
-        nixEditorPkg = nix-editor.packages.${system}.default;
-        diskLabel = "DISK_LABEL_TO_DO";
-        
-        commonModules = [
-          ./common.nix
+    let
+      system = "x86_64-linux";
+      pkgs = import nixpkgs {
+        inherit system;
+        config = { allowUnfree = true; };
+      };
+      lib = pkgs.lib;
+      nixEditorPkg = nix-editor.packages.${system}.default;
+    in {
+      nixosConfigurations.alexhp = nixpkgs.lib.nixosSystem {
+        inherit system;
+        modules = [
+          ({ ... }: { imports = [ ./common.nix ]; _module.args.label = "nixosroot"; })
+          ./hosts/hardware/alexhp-hardware.nix
+          ./hosts/alexhp.nix
           
           ({ ... }: {
             environment.systemPackages = with pkgs; [ nixEditorPkg ];
           })
 
           home-manager.nixosModules.home-manager
-          {
+          ({ config, pkgs, lib, ... }: {
             home-manager.useGlobalPkgs   = true;
             home-manager.useUserPackages = true;
             home-manager.users.a         = import ./home/a.nix;
-          }
+          })
         ];
-      in
-      {
-        devShells.${system}.default = pkgs.mkShell {
-          buildInputs = [ pkgs.git pkgs.btop ];
-        };
-        
-        nixosConfigurations = {
-          alexhp = pkgs.lib.nixosSystem {
-            inherit system;
-            modules = commonModules ++ [ ./hosts/alexhp.nix ];
-            specialArgs = { label = diskLabel; };
-          };
-          
-          buildvm = pkgs.lib.nixosSystem {
-            inherit system;
-            modules = commonModules ++ [ ./hosts/buildvm.nix ];
-            specialArgs = { label = diskLabel; };
-          };
-        };
-      }
-    );
+      };
+
+      devShells.${system}.default = pkgs.mkShell {
+        buildInputs = [ pkgs.git pkgs.btop ];
+      };
+    };
 }

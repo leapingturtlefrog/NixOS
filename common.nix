@@ -20,13 +20,13 @@
     "/extra0" = { device = "/dev/disk/by-label/${label}"; fsType = "btrfs"; options = [ "subvol=@extra0" "compress=zstd" "noatime" ]; };
     "/extra1" = { device = "/dev/disk/by-label/${label}"; fsType = "btrfs"; options = [ "subvol=@extra1" "compress=zstd" "noatime" ]; };
     "/extra2" = { device = "/dev/disk/by-label/${label}"; fsType = "btrfs"; options = [ "subvol=@extra2" "compress=zstd" "noatime" ]; };
-    "/boot" = { device = "/dev/disk/by-label/${label}-esp"; fsType = "vfat"; options = [ "fmask=0022" "dmask=0022" ]; };
+    "/boot" = { device = "/dev/disk/by-label/NIXOSBOOT"; fsType = "vfat"; options = [ "fmask=0022" "dmask=0022" ]; };
   };
-  swapDevices = [ { device = "/dev/disk/by-label/${label}-swap"; } ];
+  swapDevices = [ { device = "/dev/disk/by-label/swap"; } ];
   
   users.users.a = {
     isNormalUser = true;
-    extraGroups = [ "wheel" "networkmanager" ];
+    extraGroups = [ "wheel" "networkmanager" "devs" ];
     shell = pkgs.zsh;
   };
   programs.zsh.enable = true;

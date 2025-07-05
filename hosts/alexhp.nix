@@ -1,4 +1,4 @@
-{ ... }: {
+{ config, pkgs, lib, ... }: {
   networking.hostName = "alexhp";
   
   imports = [
